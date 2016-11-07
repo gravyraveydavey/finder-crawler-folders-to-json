@@ -3,9 +3,11 @@
 var readdir = require('readdir-enhanced');
 var json2csv = require('json2csv');
 var fs = require('fs');
+var jsonfile = require('jsonfile')
 
 var projects = {}
 var exclusions = []
+var legacy = []
 var projects_1d = []
 
 var program = require('commander');
@@ -13,7 +15,9 @@ var program = require('commander');
 program
   .version('0.0.1')
   .option('-i, --input <input_directory>', 'Directory to crawl')
-  .option('-o, --output <output_directory>', 'Directory to dump .csv file')
+  .option('-o, --output <output_directory>', 'Directory to dump file')
+  .option('-l, --legacy', 'include legacy, pre-paprika projects (those starting with only numbers)')
+  .option('-f, --format <output_format>', 'Output format (csv / json)')
   .option('-v, --verbose', 'enable console logging')
   .parse(process.argv);
 
@@ -21,6 +25,8 @@ if (!program.input){
 	console.log('Error: please provide an input directory with -i [directory]');
 } else if(!program.output){
 	console.log('Error: please provide an output directory with -o [directory]');
+} else if(!program.format){
+	console.log('Error: please provide an output format -f [csv|json]');
 } else {
 
 	readdir(program.input, {
@@ -30,14 +36,16 @@ if (!program.input){
 
 		// loop through directory list array - begin tidy
 		for (var i = 0, len = files.length; i < len; i++) {
-			// remove all support folders
-			if (files[i].toLowerCase().indexOf('support') >= 0 ){
+			// remove all unwanted folders
+			if ( (files[i].toLowerCase().indexOf('support') >= 0) || (files[i].indexOf('~') >= 0 ) || (files[i].indexOf('.') >= 0 ) ){
 
+				exclusions.push(files[i]);
 				//console.log('support found in ' + files[i]);
 				// don't need to bother cleaning original file list
 				//delete files[i];
 
 			} else {
+
 				// create objects by path
 				if (files[i].indexOf('/') == -1){
 					// top level dir - init obj
@@ -56,16 +64,22 @@ if (!program.input){
 						path[1] = path[1].replace(code[0], newcode);
 						code[0] = newcode;
 					}
+					var letter_count = code[0].replace(/[^A-z]/g,"").length;
 					if (number_count == 0){
 						exclusions.push(files[i]);
+					} else if (letter_count == 0 && !program.legacy) {
+						legacy.push(files[i]);
 					} else {
 						// split original path at project code to get just the name
 						var name = path[1].split(code[0]);
+						name = name[1].substring(1, name[1].length );
+						var tags = [code[0], name, path[1]];
 						// store as object
 						var project = {
 						  	client: path[0],
 						  	code: code[0],
-						  	name: name[1],
+						  	name: name,
+						  	tags: tags.join(', '),
 						  	full_name: path[1]
 						}
 						projects[path[0]].push(project);
@@ -81,7 +95,7 @@ if (!program.input){
 		    if (projects.hasOwnProperty(k)) {
 				var project = {
 				  	client: k,
-				  	code: k.substr(0, 3).toUpperCase(),
+				  	code: k.replace('-', '').substr(0, 3).toUpperCase(),
 				  	name: k,
 				  	full_name: k
 				}
@@ -92,16 +106,29 @@ if (!program.input){
 
 		// don't need to bother cleaning original file list
 		//files = files.filter(function(n){ return n != undefined });
+		if (program.verbose) {
+			console.log('--LEGACY--');
+			console.log(legacy);
 
-		if (program.verbose) console.log(projects_1d);
+			console.log('--EXCLUSIONS--');
+			console.log(exclusions);
+		}
 
-		var fields = ['client', 'full_name', 'code'];
-		var csv = json2csv({ data: projects_1d, fields: fields });
+//		if (program.verbose) console.log(projects_1d);
+		if (program.format == 'csv'){
 
-		fs.writeFile(program.output + '/projects.csv', csv, function(err) {
-		  if (err) throw err;
-		  console.log('file saved at ' + program.output + '/projects.csv');
-		});
+			var fields = ['client', 'full_name', 'code', 'tags'];
+			var output = json2csv({ data: projects_1d, fields: fields });
+
+			fs.writeFile(program.output + '/projects.' + program.format, output, function(err) {
+			  if (err) throw err;
+			  console.log('file saved at ' + program.output + '/projects.' + program.format);
+			});
+
+		} else {
+			jsonfile.writeFileSync(program.output + '/projects.' + program.format, projects_1d);
+			console.log('file saved at ' + program.output + '/projects.' + program.format);
+		}
 
 	});
 
