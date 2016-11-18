@@ -16,7 +16,7 @@ program
   .version('0.0.1')
   .option('-i, --input <input_directory>', 'Directory to crawl')
   .option('-o, --output <output_directory>', 'Directory to dump file')
-  .option('-l, --legacy', 'include legacy, pre-paprika projects (those starting with only numbers)')
+  .option('-l, --legacy', 'include legacy projects (those starting with only numbers)')
   .option('-f, --format <output_format>', 'Output format (csv / json)')
   .option('-v, --verbose', 'enable console logging')
   .parse(process.argv);
