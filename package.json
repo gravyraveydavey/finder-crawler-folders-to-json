@@ -16,16 +16,9 @@
     "co-prompt": "^1.0.0",
     "commander": "^2.9.0",
     "dir-to-json": "0.0.3",
-    "extend": "^3.0.0",
     "fs": "0.0.1-security",
     "json2csv": "^3.7.1",
     "jsonfile": "^2.4.0",
-    "node-readdir": "^1.0.1",
-    "node-readfiles": "^0.2.0",
-    "path": "^0.12.7",
-    "readdir-enhanced": "^1.4.5",
-    "readfiles": "^1.0.0",
-    "util": "^0.10.3",
-    "walk": "^2.3.9"
+    "readdir-enhanced": "^1.4.5"
   }
 }

@@ -4,13 +4,12 @@ var readdir = require('readdir-enhanced');
 var json2csv = require('json2csv');
 var fs = require('fs');
 var jsonfile = require('jsonfile')
+var program = require('commander');
 
 var projects = {}
 var exclusions = []
 var legacy = []
 var projects_1d = []
-
-var program = require('commander');
 
 program
   .version('0.0.1')
